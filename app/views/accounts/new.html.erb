@@ -1,0 +1,118 @@
+<div class="row">
+    <div class="col-md-6 col-md-offset-3">
+        <form id="msform">
+            <!-- progressbar -->
+            <ul id="progressbar">
+                <li class="active">Personal Details</li>
+                <li>Social Profiles</li>
+            </ul>
+            <!-- fieldsets -->
+							<fieldset>
+								<h2 class="fs-title">Personal Details</h2>
+								<h3 class="fs-subtitle">Tell us something more about you</h3>
+								<input type="text" name="fname" class="user-fname" placeholder="First Name"/>
+								<input type="text" name="lname" class="user-lname" placeholder="Last Name"/>
+								<input type="text" name="phone" class="user-phone-no" placeholder="Phone"/>
+								<input type="button" name="next" class="next action-button" value="Next"/>
+							</fieldset>
+							<fieldset>
+								<h2 class="fs-title">Bank Details</h2>
+								<input type="text" name="account_no" class="bank-acc-no" placeholder="Bank Account Number"/>
+								<input type="text" name="ifsc_no" class="bank-ifsc-no" placeholder="Bank ifsc Code"/>
+								<input type="text" name="swift_no" class="bank-swift-no" placeholder="Bank Swift"/>
+								<button  type="button" class="submit action-button submit-form"/>Submit</button>
+							</fieldset>
+        </form>
+    </div>
+</div>
+
+
+<script>
+
+//jQuery time
+var current_fs, next_fs, previous_fs; //fieldsets
+var left, opacity, scale; //fieldset properties which we will animate
+var animating; //flag to prevent quick multi-click glitches
+
+$(".next").click(function(){
+	if(animating) return false;
+	animating = true;
+	
+	current_fs = $(this).parent();
+	next_fs = $(this).parent().next();
+
+	$("#progressbar li").eq($("fieldset").index(next_fs)).addClass("active");
+
+	next_fs.show(); 
+	current_fs.animate({opacity: 0}, {
+		step: function(now, mx) {
+			scale = 1 - (1 - now) * 0.2;
+			left = (now * 50)+"%";
+			opacity = 1 - now;
+			current_fs.css({
+        'transform': 'scale('+scale+')',
+        'position': 'absolute'
+      });
+			next_fs.css({'left': left, 'opacity': opacity});
+		}, 
+		duration: 800, 
+		complete: function(){
+			current_fs.hide();
+			animating = false;
+		}, 
+		//this comes from the custom easing plugin
+		easing: 'easeInOutBack'
+	});
+});
+
+$(".previous").click(function(){
+	if(animating) return false;
+	animating = true;
+	
+	current_fs = $(this).parent();
+	previous_fs = $(this).parent().prev();
+	
+	//de-activate current step on progressbar
+	$("#progressbar li").eq($("fieldset").index(current_fs)).removeClass("active");
+	
+	//show the previous fieldset
+	previous_fs.show(); 
+	//hide the current fieldset with style
+	current_fs.animate({opacity: 0}, {
+		step: function(now, mx) {
+			//as the opacity of current_fs reduces to 0 - stored in "now"
+			//1. scale previous_fs from 80% to 100%
+			scale = 0.8 + (1 - now) * 0.2;
+			//2. take current_fs to the right(50%) - from 0%
+			left = ((1-now) * 50)+"%";
+			//3. increase opacity of previous_fs to 1 as it moves in
+			opacity = 1 - now;
+			current_fs.css({'left': left});
+			previous_fs.css({'transform': 'scale('+scale+')', 'opacity': opacity});
+		}, 
+		duration: 800, 
+		complete: function(){
+			current_fs.hide();
+			animating = false;
+		}, 
+		//this comes from the custom easing plugin
+		easing: 'easeInOutBack'
+	});
+});
+
+$('.submit-form').click(function(e){
+	var fname = $(".user-fname")[0].value
+	var lname = $(".user-lname")[0].value
+	var phoneNo = $(".user-phone-no")[0].value
+	var accNo = $(".bank-acc-no")[0].value
+	
+	var ifscNO = $(".bank-ifsc-no")[0].value
+	var swiftNo = $(".bank-swift-no")[0].value
+		$.ajax({
+			url: '/accounts',
+			type: 'POST',
+			data: { fname: fname, lname: lname, phone_no: phoneNo, acc_no: accNo, ifsc_no: ifscNO, swift_no: swiftNo}
+		})
+});
+
+</script>
